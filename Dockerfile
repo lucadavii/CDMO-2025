@@ -15,4 +15,5 @@ RUN . venv/bin/activate && \
     pip install -r requirements.txt
 
 ENV PATH="src/venv/bin:$PATH"
+RUN echo "python3 main.py" >> ~/.bashrc
 CMD ["/bin/bash"]
