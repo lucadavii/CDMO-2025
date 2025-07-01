@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import subprocess
 import argparse
 import time
@@ -20,38 +21,58 @@ def run_minizinc_subproc(model_filename, solver_name, n, timeout=300):
     :param model_filename: The filename of the model to run.
     :param soolver_name: The name of the solver to use.
     :param timeout: The timeout for the solver in seconds.
-    :return: The result of the model run.
+    :return: The result of the model run, the elapsed time, and whether it timed out.
     """
 
     init_time = time.time()
-    process = subprocess.run(
-        ["minizinc", "--solver", solver_name, f"-D n={n}","--json-stream", model_filename],
-        capture_output=True, 
-        timeout=timeout,
-        text=True
-    )
-    end_time = time.time()
-    elapsed_time = math.floor(end_time - init_time)
+    timed_out = False
+    try:
+        process = subprocess.run(
+            ["minizinc", "--solver", solver_name, f"-D n={n}","--json-stream", model_filename],
+            capture_output=True, 
+            timeout=timeout,
+            text=True
+        )
+    
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        process = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="Timeout expired")
+    finally:
+        end_time = time.time()
+        elapsed_time = math.floor(end_time - init_time)
 
 
-    return process.stdout, elapsed_time
+    return process.stdout, elapsed_time, timed_out
 
-def encode_solution(output, solver_name,n,time=300):
+def encode_solution(output, solver_name,n,time=300, timed_out=False):
     """
     Encode the solution from the solver output.
     as a dictionary, to be written as json.
-    :param sol: The solution string from the solver.
+    :param output: The output from the solver.
+    :param solver_name: The name of the solver used.
+    :param n: The value for n.
+    :param time: The time taken for the solver to run.
+    :param timed_out: Whether the solver timed out.
+    :return: A dictionary with the solution, n, time, and optimality status.
     """
 
+    if timed_out:
+        return {f"{solver_name}":{"sol": [], "n": n, "time": 300, "optimal":False}}
     
-    data = json.loads(output)
-    if data["type"]=="solution":
-        return {f"{solver_name}":{"sol": json.loads(data["output"]["default"])["sol"], "n": n, "time": time, "optimal":False}}
-    elif data["type"]=="status" and data["status"]=="UNSATISFIABLE":
-        return {f"{solver_name}":{"sol": [], "solver": solver_name, "n": n, "time": time,"optimal":False}}
-    elif data["type"]=="status" and data["status"]=="UNKNOWN":
-        return {f"{solver_name}":{"sol": [], "solver": solver_name, "n": n, "time": time,"optimal":False}}
+    for line in output.strip().splitlines():
+        if not line: continue
+        data = json.loads(line)
+        if data["type"]=="solution":
+            result= {f"{solver_name}":{"sol": json.loads(data["output"]["default"])["sol"], "n": n, "time": time, "optimal":True}}
+        elif data["type"]=="status" and (data["status"]=="UNSATISFIABLE" or data["status"]=="UNKNOWN"):
+            result = {f"{solver_name}":{"sol": [], "n": n, "time": 300,"optimal":False}}
+        elif data["type"]=="status" and data["status"]=="OPTIMAL_SOLUTION":
+            result[f"{solver_name}"]["optimal"] = True
+        else:
+            result[f'{solver_name}']['optimal'] = False
 
+    return result
+    
 def run_models(options:list[str], n, timeout):
     """
     Run the models with the specified options and parameters.
@@ -64,8 +85,8 @@ def run_models(options:list[str], n, timeout):
     results = dict()
     for opt in options:
         model = option[opt]
-        output, elapsed_time = run_minizinc_subproc(model["filename"], model["solver_name"], n, timeout)
-        result = encode_solution(output, model["solver_name"], n, elapsed_time)
+        output, elapsed_time, timed_out = run_minizinc_subproc(model["filename"], model["solver_name"], n, timeout)
+        result = encode_solution(output, model["solver_name"], n, elapsed_time,timed_out)
         results[opt] = result[model["solver_name"]]
     return results
 def write_results_to_file(results, n):
@@ -75,10 +96,14 @@ def write_results_to_file(results, n):
     :param results: The results to write.
     :param n: The value of n for which the results were generated.
     """
-    
-    output_file = pathlib.Path(f"../../res/CP/{n}.json")
-    with open(output_file, "w") as f:
-        json.dump(results, f, indent=4)
+    try:
+        output_file = pathlib.Path(f"../../res/CP/{n}.json") #TODO: to be ajjusted to docker path
+        with open(output_file, "w") as f:
+            json.dump(results, f, indent=4)
+    except FileNotFoundError:
+        print(f"Error: The directory {output_file.parent} does not exist. Please create it before running the script.")
+    except Exception as e:
+        print(f"An error occurred while writing to the file: {e}")
 
 def main(opt,n,timeout):
     """
@@ -89,7 +114,7 @@ def main(opt,n,timeout):
     :param timeout: The timeout in seconds.
     """
     if n%2 != 0: raise ValueError("n must be an even number")
-    
+
     if opt == "all_models":
         results= run_models(option.keys(), n, timeout)
         write_results_to_file(results, n)
