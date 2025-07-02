@@ -28,7 +28,14 @@ constraint forall(a in 1..n, b in a+1..n)( %every team plays with every other te
 %     x[3,1,0]=1 /\ x[3,1,1]=3
 % );
 
-solve :: int_search(x,first_fail, indomain_random,complete):: restart_luby(250) :: relax_and_reconstruct(array1d(x),85) satisfy;
+%implied constraints
+
+constraint forall(l in 1..n)( %each team plays exactly n-1 matches
+    count([x[i,j,k] | i in 1..periods, j in 1..weeks, k in 0..1], l) = weeks
+);
+
+
+solve satisfy;
 %output ["[\(show(x[p,w,0])),\(show(x[p,w,1]))] "++ if w=weeks then "\n" else "" endif |p in 1..periods, w in 1..weeks]; 
 output[
     "{\n\"sol\":\n" ++

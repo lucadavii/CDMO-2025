@@ -11,7 +11,8 @@ option={
         "gecode": {"filename": "STS_model.mzn", "solver_name": "gecode"},
         "chuffed": {"filename": "STS_model.mzn", "solver_name": "chuffed"},
         #"gecode_symbreak": {"filename": "STS_model.mzn", "solver_name": "gecode"}, #TODO: define models with symbreak and optimality
-        #"gecode_optimality": {"filename": "STS_model.mzn", "solver_name": "gecode"},
+        "gecode_optimality": {"filename": "STS_model_opt.mzn", "solver_name": "gecode"},
+        "chuffed_optimality": {"filename": "STS_model_opt.mzn", "solver_name": "chuffed"}
     }
 
 def run_minizinc_subproc(model_filename, solver_name, n, timeout=300):
@@ -58,18 +59,20 @@ def encode_solution(output, solver_name,n,time=300, timed_out=False):
 
     if timed_out:
         return {f"{solver_name}":{"sol": [], "n": n, "time": 300, "optimal":False}}
-    
+    result = dict()
     for line in output.strip().splitlines():
+
         if not line: continue
         data = json.loads(line)
+
         if data["type"]=="solution":
-            result= {f"{solver_name}":{"sol": json.loads(data["output"]["default"])["sol"], "n": n, "time": time, "optimal":True}}
+            solution = json.loads(data["output"]["default"])
+            result= {f"{solver_name}":{"sol": solution["sol"], "n": n, "time": time, "optimal":True, "obj": solution["obj"] if "obj" in solution.keys() else None}}
         elif data["type"]=="status" and (data["status"]=="UNSATISFIABLE" or data["status"]=="UNKNOWN"):
             result = {f"{solver_name}":{"sol": [], "n": n, "time": 300,"optimal":False}}
         elif data["type"]=="status" and data["status"]=="OPTIMAL_SOLUTION":
             result[f"{solver_name}"]["optimal"] = True
-        else:
-            result[f'{solver_name}']['optimal'] = False
+
 
     return result
     
@@ -131,7 +134,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run MiniZinc model with specified options.")
     parser.add_argument(
         "option",
-        choices=["gecode", "chuffed", "gecode_symbreak", "gecode_optimality", "all_models", "all_models_up_to_n"],
+        choices=["gecode", "chuffed", "gecode_symbreak", "gecode_optimality","chuffed_optimality", "all_models", "all_models_up_to_n"],
         help="Solver/model option to use"
     )
     parser.add_argument("n", type=int, help="Value for n")
