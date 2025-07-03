@@ -39,21 +39,38 @@ constraint forall(i in 1..periods, j in 1..weeks)( %the first team in each slot 
     x[i,j,0] < x[i,j,1]
 );
 
-constraint forall(i in 1..periods-1)( %order on the periods based on the first team to eliminate permutations of periods symmetries
-    lex_lesseq(
-        [x[i,j,0] | j in 1..weeks],
-        [x[i+1,j,0] | j in 1..weeks]
-    )
+% constraint lex_lesseq(
+%     [x[i,j,0] | i in 1..periods, j in 1..weeks],
+%     [x[i,j,1] | i in 1..periods, j in 1..weeks]
+% );
+
+% constraint forall(i in 1..periods-1)( %order on the periods based on the first team to eliminate permutations of periods symmetries
+%     lex_lesseq(
+%         [x[i,j,0] | j in 1..weeks],
+%         [x[i+1,j,0] | j in 1..weeks]
+%     )
+% );
+
+constraint lex_lesseq(
+    [x[i,j,0] | i in periods..1, j in 1..weeks],
+    [x[i,j,0] | i in 1..periods, j in 1..weeks]
 );
 
-constraint forall(j in 1..weeks-1)( %eliminate permutations of weeks symmetries
-    lex_lesseq(
-        [x[i,j,0] | i in 1..periods],
-        [x[i,j+1,0] | i in 1..periods]
-    )
+% constraint forall(j in 1..weeks-1)( %eliminate permutations of weeks symmetries
+%     lex_lesseq(
+%         [x[i,j,0] | i in 1..periods],
+%         [x[i,j+1,0] | i in 1..periods]
+%     )
+%);
+
+constraint lex_lesseq(
+    [x[i,j,0]| i in 1..periods, j in weeks..1],
+    [x[i,j,0]| i in 1..periods, j in 1..weeks]
 );
 
-solve satisfy;
+
+
+solve ::int_search(x, first_fail,indomain_random, complete) :: restart_luby(120) :: relax_and_reconstruct(array1d(x),80) satisfy; %a solution is found more easily for n=14 if restart is 120 (comparable to peak depth) and p is rather high
 %output ["[\(show(x[p,w,0])),\(show(x[p,w,1]))] "++ if w=weeks then "\n" else "" endif |p in 1..periods, w in 1..weeks]; 
 output[
     "{\n\"sol\":\n" ++
