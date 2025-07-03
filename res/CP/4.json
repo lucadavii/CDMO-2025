@@ -10,5 +10,29 @@
         "n": 4,
         "time": 300,
         "optimal": false
+    },
+    "gecode_symbreak": {
+        "sol": [],
+        "n": 4,
+        "time": 300,
+        "optimal": false
+    },
+    "chuffed_symbreak": {
+        "sol": [],
+        "n": 4,
+        "time": 300,
+        "optimal": false
+    },
+    "gecode_optimality": {
+        "sol": [],
+        "n": 4,
+        "time": 300,
+        "optimal": false
+    },
+    "chuffed_optimality": {
+        "sol": [],
+        "n": 4,
+        "time": 300,
+        "optimal": false
     }
 }

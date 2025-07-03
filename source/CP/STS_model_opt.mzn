@@ -48,7 +48,7 @@ function var int: obj(array[1..periods,1..weeks,0..1] of var int: x) =
 %     count([x[i,j,0]| i in 1..periods, j in 1..weeks], l) == periods - 1
 % );
 
-%lowerbound on objective function
+%lowerbound on objective function, fix for n=2: gives unsat
 constraint obj(x) == n;
 
 solve minimize obj(x);

@@ -10,7 +10,8 @@ import pathlib
 option={
         "gecode": {"filename": "STS_model.mzn", "solver_name": "gecode"},
         "chuffed": {"filename": "STS_model.mzn", "solver_name": "chuffed"},
-        #"gecode_symbreak": {"filename": "STS_model.mzn", "solver_name": "gecode"}, #TODO: define models with symbreak and optimality
+        "gecode_symbreak": {"filename": "STS_model_symbreak.mzn", "solver_name": "gecode"},
+        "chuffed_symbreak": {"filename": "STS_model_symbreak.mzn", "solver_name": "chuffed"},
         "gecode_optimality": {"filename": "STS_model_opt.mzn", "solver_name": "gecode"},
         "chuffed_optimality": {"filename": "STS_model_opt.mzn", "solver_name": "chuffed"}
     }
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run MiniZinc model with specified options.")
     parser.add_argument(
         "option",
-        choices=["gecode", "chuffed", "gecode_symbreak", "gecode_optimality","chuffed_optimality", "all_models", "all_models_up_to_n"],
+        choices=["gecode", "chuffed", "gecode_symbreak", "chuffed_symbreak","gecode_optimality","chuffed_optimality", "all_models", "all_models_up_to_n"],
         help="Solver/model option to use"
     )
     parser.add_argument("n", type=int, help="Value for n")

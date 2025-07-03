@@ -9,8 +9,9 @@
             ]
         ],
         "n": 2,
-        "time": 1,
-        "optimal": true
+        "time": 0,
+        "optimal": true,
+        "obj": null
     },
     "chuffed": {
         "sol": [
@@ -23,6 +24,47 @@
         ],
         "n": 2,
         "time": 0,
-        "optimal": true
+        "optimal": true,
+        "obj": null
+    },
+    "gecode_symbreak": {
+        "sol": [
+            [
+                [
+                    1,
+                    2
+                ]
+            ]
+        ],
+        "n": 2,
+        "time": 0,
+        "optimal": true,
+        "obj": null
+    },
+    "chuffed_symbreak": {
+        "sol": [
+            [
+                [
+                    1,
+                    2
+                ]
+            ]
+        ],
+        "n": 2,
+        "time": 0,
+        "optimal": true,
+        "obj": null
+    },
+    "gecode_optimality": {
+        "sol": [],
+        "n": 2,
+        "time": 300,
+        "optimal": false
+    },
+    "chuffed_optimality": {
+        "sol": [],
+        "n": 2,
+        "time": 300,
+        "optimal": false
     }
 }
